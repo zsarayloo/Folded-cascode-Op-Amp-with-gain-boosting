@@ -1,0 +1,446 @@
+ ****** HSPICE -- A-2008.03 32-BIT (Feb 26 2008) winnt ******                   
+  Copyright (C) 2008 Synopsys, Inc. All Rights Reserved.                        
+  Unpublished-rights reserved under US copyright laws.
+  This program is protected by law and is subject to the 
+  terms and conditions of the license agreement found in:
+    C:\synopsys\Hspice_A-2008.03\license.warn
+  Use of this program is your acceptance to be bound by this 
+  license agreement. HSPICE is the trademark of Synopsys, Inc.
+  Input File:                                                                   
+ Init: read install configuration file: C:\synopsys\Hspice_A-2008.03\meta.cfg
+ Init: hspice initialization file: C:\synopsys\Hspice_A-2008.03\hspice.ini
+
+
+
+
+ .options post ingold=2
+ .param lmin=0.5u fin=120k tin='1/fin' offset=35m
+ .global dd gnd
+
+
+ ***********************auxopamp circuit for gain boosting********
+ .subckt auxopamp    bias  input+  input-     o+  o- 
+
+ m1    o+   input-   s12  gnd  nmos    w='7*lmin'     l='5*lmin'
+ m2    o-   input+   s12  gnd  nmos    w='7*lmin'     l='5*lmin'
+ mp1   o+   o+       dd   dd   pmos    w='21*lmin'    l='5*lmin'
+ mp2   o-   o+       dd   dd   pmos    w='21*lmin'    l='5*lmin'
+ mbias s12  bias     gnd  gnd  nmos    w='7*lmin'     l='5*lmin'
+
+ .ends auxopamp
+
+ ************************* circuit
+
+ m11   d11     i+      s112   gnd   nmos   w='30.324*lmin'  l='5*lmin'
+ m12   d12     i-      s112   gnd   nmos   w='30.324*lmin'  l='5*lmin'
+ m13   s112    bias3   s13    gnd   nmos   w='30.324*lmin'  l='5*lmin'
+ m14   s13     bias4   gnd    gnd   nmos   w='15*lmin'      l='5*lmin'
+ m15   d12     cmfb    dd     dd    pmos   w='576*lmin'     l='4*lmin'
+ m16   d11     cmfb    dd     dd    pmos   w='576*lmin'     l='4*lmin'
+ m17   out-    g17     d11    dd    pmos   w='355*lmin'     l='4*lmin'
+ m18   out+    g18     d12    dd    pmos   w='355*lmin'     l='4*lmin'
+ m19   out-    g19     s19    gnd   nmos   w='30.324*lmin'  l='5*lmin'
+ m20   out+    g20     s20    gnd   nmos   w='30.324*lmin'  l='5*lmin'
+ m21   s19     bias4   gnd    gnd   nmos   w='40*lmin'      l='5*lmin'
+ m22   s20     bias4   gnd    gnd   nmos   w='40*lmin'      l='5*lmin'
+
+ ********
+ xaxuopamp1   bias2  d11   d12  g17  g18   auxopamp
+
+ xaxuopamp3   bias3  s19   s20  g19  g20   auxopamp
+
+ cload-	out-	gnd     5pf
+ cload+	out+	gnd	5pf
+
+ c17 g17 gnd 3pf
+ c18 g18 gnd 3pf
+ c19 g19 gnd 3pf
+ c20 g20 gnd 3pf
+
+ ********************************biasing circuit
+
+ mb1  dd  b1  b1  dd  pmos  w='59.712u'   l='4*lmin'
+ mb3  dd  b1  b3  dd  pmos  w='59.712u'   l='4*lmin'
+
+ mb2  b1  bi2 bi2 dd  pmos  w='59.712u'   l='4*lmin'
+ mb4  b3  bi2 b4  dd  pmos  w='59.712u'   l='4*lmin'
+
+ mb5  b4  b4  bi3 0   nmos  w='37u'       l='16*lmin'
+ mb6  bi3 bi3 0   0   nmos  w='37u'       l='4*lmin'
+
+ mb7  dd  b4  bi4 0   nmos  w='37u'       l='4*lmin'
+ mb8  bi4 bi3 0   0   nmos  w='37u'       l='4*lmin'
+ ebias2   bias2  gnd  bi2 0 1
+ ebias3   bias3  gnd  bi4 0 1
+ ebias4   bias4  gnd  bi3 0 1
+
+
+ *********cmfb circuit
+ e1 x y out- 0 0.5
+ e2 y z out+ 0 0.5 
+ vcmo z 0 dc -2.5
+ vbn cmfb w dc 0.5
+ e3 w 0 x 0 3 
+ **************************** supply
+
+ vdd   dd   gnd  5v
+ id    bi2  0    49.74u
+
+
+ vi-	i-	gnd	sin	2	1m	fin
+ vi+	i+	gnd	sin	2	-1m	fin 
+
+ *vi+	i+	gnd     2  ac=1m  0
+ *vi-	i-	gnd     2  ac=1m  180
+
+ ******************************circuit analysis
+
+ eout vout 0 vol='v(out-)-v(out+)-offset'
+ ein vin 0 vol='v(i+)-v(i-)'
+
+ *.ac dec 1000  1 1g
+ .tran	'10*tin'	'12*tin' start='2*tin'
+
+ *.meas ac gain find par'vdb(vout)' at 1
+ *.meas ac ft when vdb(out+)=0
+ *.meas ac ph find vp(out+) at=ft 
+ *.meas ac pm param'180+ph'
+ .plot v(vout)
+ .plot v(vin)
+ .op
+ .print v(out+,out-) 
+ .probe
+
+ **warning**  unknown analysis mode:  ьзмАP .. line ignored
+
+
+ ***********************************************************************
+ ** runlvl is invoked, you can disable it by:
+      a) Add option runlvl=0 to your current simulation job.
+      b) Copy $installdir/hspice.ini to your HOME directory and
+         customize it by adding option runlvl=0, which disables
+         it for all of your simulation jobs.
+      c) Re-invoke $installdir/bin/config program and unselect the
+         option runlvl setting in box 'hspice.ini' which disables
+         it for whole group simulation jobs.
+
+ ** runlvl is invoked, some options are ignored or automatically set:
+      Options below are automatically set(user setting will overwrite them):
+      if runlvl=6,            .option bypass=0
+      if runlvl=[1|2|3|4|5],  .option bypass=2
+
+      Options below are ignored, they are replaced by automated algorithms:
+        lvltim    dvdt      ft    fast   trtol  absvar  relvar
+          relq  chgtol    dvtr    imin    itl3    rmax
+
+ ** runlvl is invoked, actual option value used by HSPICE are:
+       runlvl= 3       bypass= 2      mbypass=   2.00   bytol= 100.00u
+ ***********************************************************************
+
+1****** HSPICE -- A-2008.03 32-BIT (Feb 26 2008) winnt ******                   
+ ******  
+ *project 'folded cascode op amp with gain boosting'                            
+  ******  circuit name directory                                                
+ ******  
+ circuit number to circuit name directory
+   number circuitname                     definition         multiplier
+        0 main circuit
+        1 xaxuopamp1.                     auxopamp           1.00 
+        2 xaxuopamp3.                     auxopamp           1.00 
+
+ **warning**  associated with encrypted block(s) were suppressed due to encrypted content
+
+
+ **warning** dc voltage reset to initial transient source value
+             in source        0:vi-                 new dc=  0.2000D+01
+
+
+ **warning** dc voltage reset to initial transient source value
+             in source        0:vi+                 new dc=  0.2000D+01
+
+ 
+
+ **warning** the following singular supplies were terminated to 1 meg resistor 
+   supply       node1            node2
+  ein                     0:vin              defined in subckt 0                     0:0                defined in subckt 0               
+  eout                    0:vout             defined in subckt 0                     0:0                defined in subckt 0               
+      
+  Opening plot unit= 79
+ file=e:\kntu(m.s)\project\folded cascode by hspice\gainboosting\gainboosting\h
+
+
+ **diagnostic** dc convergence failure, 
+ resetting dcon option to 1 and retrying
+
+ **diagnostic** dc convergence successful
+ you can increase the efficiency of the
+ operating point calculation by setting dcon= 1
+ in the .option statement
+1****** HSPICE -- A-2008.03 32-BIT (Feb 26 2008) winnt ******                   
+ ******  
+ *project 'folded cascode op amp with gain boosting'                            
+  ******  operating point information      tnom=  25.000 temp=  25.000          
+ ******  
+ ***** operating point status is all       simulation time is     0.     
+    node    =voltage      node    =voltage      node    =voltage
+
+ +0:b1      = 3.820e+00 0:b3      = 3.820e+00 0:b4      = 2.496e+00
+ +0:bi2     = 2.368e+00 0:bi3     = 1.005e+00 0:bi4     = 1.244e+00
+ +0:bias2   = 2.368e+00 0:bias3   = 1.244e+00 0:bias4   = 1.005e+00
+ +0:cmfb    = 4.037e+00 0:d11     = 4.308e+00 0:d12     = 4.308e+00
+ +0:dd      = 5.000e+00 0:g17     = 3.148e+00 0:g18     = 3.148e+00
+ +0:g19     = 3.848e+00 0:g20     = 3.848e+00 0:i+      = 2.000e+00
+ +0:i-      = 2.000e+00 0:out+    = 3.678e+00 0:out-    = 3.679e+00
+ +0:s112    = 9.007e-01 0:s13     = 2.474e-01 0:s19     = 2.362e+00
+ +0:s20     = 2.362e+00 0:vin     =   0.      0:vout    =-3.460e-02
+ +0:w       = 3.537e+00 0:x       = 1.179e+00 0:y       =-6.606e-01
+ +0:z       =-2.500e+00 1:s12     = 1.958e+00 2:s12     = 9.652e-01
+
+
+ ****  voltage sources
+
+ subckt                                                         
+ element  0:vcmo     0:vbn      0:vdd      0:vi-      0:vi+     
+  volts   -2.500e+00  5.000e-01  5.000e+00  2.000e+00  2.000e+00
+  current    0.         0.      -3.243e-04    0.         0.     
+  power      0.         0.       1.621e-03    0.         0.     
+
+     total voltage source power dissipation=  1.621e-03       watts
+
+
+
+ ***** current sources
+
+ subckt             
+ element  0:id      
+  volts    2.368e+00
+  current  4.974e-05
+  power   -1.178e-04
+
+
+     total current source power dissipation=-1.178e-04       watts
+
+ **** voltage-controlled voltage sources
+
+
+ subckt                                                                    
+ element  0:ebias2   0:ebias3   0:ebias4   0:e1       0:e2       0:e3      
+  volts    2.368e+00  1.244e+00  1.005e+00  1.839e+00  1.839e+00  3.537e+00
+  current    0.         0.         0.         0.         0.         0.     
+
+
+
+ subckt                        
+ element  0:eout     0:ein     
+  volts   -3.460e-02    0.     
+  current  3.460e-08    0.     
+
+
+
+
+
+ **** mosfets
+
+
+ subckt                                                                    
+ element  0:m11      0:m12      0:m13      0:m14      0:m15      0:m16     
+ model    0:nmos     0:nmos     0:nmos     0:nmos     0:pmos     0:pmos    
+ region     Saturati   Saturati   Saturati   Saturati   Saturati   Saturati
+  id       3.045e-06  3.045e-06  6.090e-06  6.090e-06 -2.253e-05 -2.253e-05
+  ibs     -9.007e-15 -9.007e-15 -2.474e-15    0.         0.         0.     
+  ibd     -4.308e-14 -4.308e-14 -9.007e-15 -2.474e-15  6.917e-15  6.917e-15
+  vgs      1.099e+00  1.099e+00  9.969e-01  1.005e+00 -9.627e-01 -9.627e-01
+  vds      3.407e+00  3.407e+00  6.533e-01  2.474e-01 -6.917e-01 -6.917e-01
+  vbs     -9.007e-01 -9.007e-01 -2.474e-01    0.         0.         0.     
+  vth      1.005e+00  1.005e+00  8.614e-01  8.073e-01 -8.708e-01 -8.708e-01
+  vdsat    8.333e-02  8.333e-02  1.168e-01  1.638e-01 -7.781e-02 -7.781e-02
+  vod      9.372e-02  9.372e-02  1.355e-01  1.979e-01 -9.195e-02 -9.195e-02
+  beta     7.658e-04  7.658e-04  7.559e-04  3.670e-04  6.209e-03  6.209e-03
+  gam eff  4.695e-01  4.695e-01  4.747e-01  4.772e-01  5.650e-01  5.650e-01
+  gm       6.449e-05  6.449e-05  8.824e-05  5.976e-05  4.860e-04  4.860e-04
+  gds      5.690e-09  5.690e-09  1.594e-08  2.193e-08  1.292e-07  1.292e-07
+  gmb      1.247e-05  1.247e-05  2.197e-05    0.         0.         0.     
+  cdtot    3.306e-15  3.306e-15  3.085e-15  1.510e-15  5.843e-14  5.843e-14
+  cgtot    4.846e-14  4.846e-14  4.807e-14  2.372e-14  7.551e-13  7.551e-13
+  cstot    4.317e-14  4.317e-14  4.317e-14  2.136e-14  6.543e-13  6.543e-13
+  cbtot    1.977e-15  1.977e-15  1.813e-15  8.588e-16  4.238e-14  4.238e-14
+  cgs      4.317e-14  4.317e-14  4.317e-14  2.136e-14  6.543e-13  6.543e-13
+  cgd      3.306e-15  3.306e-15  3.085e-15  1.510e-15  5.843e-14  5.843e-14
+
+
+
+ subckt                                                                    
+ element  0:m17      0:m18      0:m19      0:m20      0:m21      0:m22     
+ model    0:pmos     0:pmos     0:nmos     0:nmos     0:nmos     0:nmos    
+ region     Saturati   Saturati   Saturati   Saturati   Saturati   Saturati
+  id      -1.948e-05 -1.948e-05  1.948e-05  1.948e-05  1.948e-05  1.948e-05
+  ibs      6.917e-15  6.917e-15 -2.362e-14 -2.362e-14    0.         0.     
+  ibd      1.321e-14  1.321e-14 -3.679e-14 -3.679e-14 -2.362e-14 -2.362e-14
+  vgs     -1.160e+00 -1.160e+00  1.486e+00  1.486e+00  1.005e+00  1.005e+00
+  vds     -6.290e-01 -6.294e-01  1.317e+00  1.316e+00  2.362e+00  2.362e+00
+  vbs      6.917e-01  6.917e-01 -2.362e+00 -2.362e+00    0.         0.     
+  vth     -1.053e+00 -1.053e+00  1.245e+00  1.245e+00  7.908e-01  7.908e-01
+  vdsat   -9.431e-02 -9.431e-02  2.148e-01  2.148e-01  1.806e-01  1.806e-01
+  vod     -1.068e-01 -1.068e-01  2.403e-01  2.403e-01  2.144e-01  2.144e-01
+  beta     3.804e-03  3.804e-03  7.293e-04  7.293e-04  9.730e-04  9.730e-04
+  gam eff  5.556e-01  5.556e-01  4.613e-01  4.613e-01  4.772e-01  4.772e-01
+  gm       3.607e-04  3.607e-04  1.565e-04  1.565e-04  1.765e-04  1.765e-04
+  gds      1.341e-07  1.341e-07  8.539e-08  8.539e-08  7.130e-08  7.130e-08
+  gmb      7.900e-05  7.900e-05  2.201e-05  2.201e-05    0.         0.     
+  cdtot    3.596e-14  3.596e-14  3.138e-15  3.138e-15  4.250e-15  4.250e-15
+  cgtot    4.570e-13  4.570e-13  4.712e-14  4.712e-14  6.299e-14  6.299e-14
+  cstot    4.033e-13  4.033e-13  4.317e-14  4.317e-14  5.695e-14  5.695e-14
+  cbtot    1.782e-14  1.782e-14  8.084e-16  8.084e-16  1.789e-15  1.789e-15
+  cgs      4.033e-13  4.033e-13  4.317e-14  4.317e-14  5.695e-14  5.695e-14
+  cgd      3.596e-14  3.596e-14  3.138e-15  3.138e-15  4.250e-15  4.250e-15
+
+
+
+ subckt                                                                    
+ element  0:mb1      0:mb3      0:mb2      0:mb4      0:mb5      0:mb6     
+ model    0:pmos     0:pmos     0:pmos     0:pmos     0:nmos     0:nmos    
+ region     Saturati   Saturati   Saturati   Saturati   Saturati   Saturati
+  id       4.974e-05  4.974e-05  4.974e-05  4.974e-05  4.974e-05  4.974e-05
+  ibs      1.179e-14  1.179e-14  2.631e-14  2.503e-14 -1.005e-14    0.     
+  ibd        0.         0.       1.179e-14  1.179e-14 -2.497e-14 -1.005e-14
+  vgs        0.      -2.610e-04    0.      -1.278e-01  1.491e+00  1.005e+00
+  vds      1.179e+00  1.179e+00  1.451e+00  1.324e+00  1.491e+00  1.005e+00
+  vbs      1.179e+00  1.179e+00  2.631e+00  2.503e+00 -1.005e+00    0.     
+  vth     -8.708e-01 -8.708e-01 -1.152e+00 -1.152e+00  1.035e+00  7.810e-01
+  vdsat   -2.546e-01 -2.546e-01 -2.616e-01 -2.619e-01  4.069e-01  1.886e-01
+  vod      8.708e-01  8.706e-01  1.152e+00  1.025e+00  4.558e-01  2.243e-01
+  beta     1.205e-03  1.205e-03  1.204e-03  1.203e-03  5.273e-04  2.262e-03
+  gam eff  5.650e-01  5.650e-01  5.505e-01  5.505e-01  4.908e-01  4.709e-01
+  gm       3.092e-04  3.092e-04  3.198e-04  3.192e-04  2.106e-04  4.267e-04
+  gds      7.729e-07  7.729e-07  7.685e-07  7.790e-07  3.669e-08  3.128e-07
+  gmb        0.         0.       5.870e-05  5.860e-05  3.938e-05    0.     
+  cdtot    1.357e-13  1.357e-13  1.357e-13  1.357e-13  8.391e-15  7.554e-15
+  cgtot    1.511e-13  1.511e-13  1.502e-13  1.502e-13  3.521e-13  9.396e-14
+  cstot    1.223e-14  1.223e-14  1.230e-14  1.227e-14  3.396e-13  8.406e-14
+  cbtot    3.161e-15  3.161e-15  2.270e-15  2.268e-15  4.146e-15  2.346e-15
+  cgs      1.223e-14  1.223e-14  1.230e-14  1.227e-14  3.396e-13  8.406e-14
+  cgd      1.357e-13  1.357e-13  1.357e-13  1.357e-13  8.391e-15  7.554e-15
+
+
+
+ subckt                         xaxuopamp1 xaxuopamp1 xaxuopamp1 xaxuopamp1
+ element  0:mb7      0:mb8      1:m1       1:m2       1:mp1      1:mp2     
+ model    0:nmos     0:nmos     0:nmos     0:nmos     0:pmos     0:pmos    
+ region     Saturati   Saturati   Saturati   Saturati   Saturati   Saturati
+  id       4.981e-05  4.981e-05  5.950e-05  5.950e-05 -5.950e-05 -5.950e-05
+  ibs     -1.244e-14    0.      -1.958e-14 -1.958e-14    0.         0.     
+  ibd     -5.000e-14 -1.244e-14 -3.148e-14 -3.148e-14  1.852e-14  1.852e-14
+  vgs      1.252e+00  1.005e+00  2.349e+00  2.349e+00 -1.852e+00 -1.852e+00
+  vds      3.755e+00  1.244e+00  1.189e+00  1.189e+00 -1.852e+00 -1.852e+00
+  vbs     -1.244e+00    0.      -1.958e+00 -1.958e+00    0.         0.     
+  vth      1.035e+00  7.810e-01  1.351e+00  1.351e+00 -8.777e-01 -8.777e-01
+  vdsat    1.921e-01  1.886e-01  7.712e-01  7.712e-01 -7.633e-01 -7.633e-01
+  vod      2.169e-01  2.243e-01  9.981e-01  9.981e-01 -9.743e-01 -9.743e-01
+  beta     2.261e-03  2.262e-03  1.386e-04  1.386e-04  1.445e-04  1.445e-04
+  gam eff  4.582e-01  4.709e-01  4.633e-01  4.633e-01  5.726e-01  5.726e-01
+  gm       4.445e-04  4.276e-04  1.044e-04  1.044e-04  1.092e-04  1.092e-04
+  gds      2.765e-07  3.089e-07  6.510e-07  6.510e-07  1.066e-06  1.066e-06
+  gmb      7.041e-05    0.       2.177e-05  2.177e-05    0.         0.     
+  cdtot    7.976e-15  7.591e-15  7.220e-16  7.220e-16  2.203e-15  2.203e-15
+  cgtot    9.369e-14  9.400e-14  1.095e-14  1.095e-14  3.255e-14  3.255e-14
+  cstot    8.406e-14  8.406e-14  9.966e-15  9.966e-15  2.990e-14  2.990e-14
+  cbtot    1.656e-15  2.346e-15  2.663e-16  2.663e-16  4.514e-16  4.514e-16
+  cgs      8.406e-14  8.406e-14  9.966e-15  9.966e-15  2.990e-14  2.990e-14
+  cgd      7.976e-15  7.591e-15  7.220e-16  7.220e-16  2.203e-15  2.203e-15
+
+
+
+ subckt   xaxuopamp1 xaxuopamp3 xaxuopamp3 xaxuopamp3 xaxuopamp3 xaxuopamp3
+ element  1:mbias    2:m1       2:m2       2:mp1      2:mp2      2:mbias   
+ model    0:nmos     0:nmos     0:nmos     0:pmos     0:pmos     0:nmos    
+ region     Saturati   Saturati   Saturati   Saturati   Saturati   Saturati
+  id       1.190e-04  5.474e-06  5.474e-06 -5.474e-06 -5.474e-06  1.095e-05
+  ibs        0.      -9.652e-15 -9.652e-15    0.         0.         0.     
+  ibd     -1.958e-14 -3.848e-14 -3.848e-14  1.152e-14  1.152e-14 -9.652e-15
+  vgs      2.368e+00  1.396e+00  1.396e+00 -1.151e+00 -1.151e+00  1.244e+00
+  vds      1.958e+00  2.883e+00  2.883e+00 -1.151e+00 -1.151e+00  9.652e-01
+  vbs        0.      -9.652e-01 -9.652e-01    0.         0.         0.     
+  vth      8.375e-01  1.121e+00  1.121e+00 -8.777e-01 -8.777e-01  8.375e-01
+  vdsat    1.064e+00  2.275e-01  2.275e-01 -2.280e-01 -2.280e-01  3.175e-01
+  vod      1.531e+00  2.754e-01  2.754e-01 -2.740e-01 -2.740e-01  4.068e-01
+  beta     1.256e-04  1.673e-04  1.673e-04  1.696e-04  1.696e-04  1.615e-04
+  gam eff  4.772e-01  4.691e-01  4.691e-01  5.726e-01  5.726e-01  4.772e-01
+  gm       1.301e-04  3.832e-05  3.832e-05  3.871e-05  3.871e-05  5.081e-05
+  gds      1.254e-06  2.324e-08  2.324e-08  5.029e-08  5.029e-08  6.636e-08
+  gmb        0.       9.583e-06  9.583e-06    0.         0.         0.     
+  cdtot    7.363e-16  7.534e-16  7.534e-16  2.164e-15  2.164e-15  7.179e-16
+  cgtot    1.097e-14  1.110e-14  1.110e-14  3.304e-14  3.304e-14  1.106e-14
+  cstot    9.966e-15  9.966e-15  9.966e-15  2.990e-14  2.990e-14  9.966e-15
+  cbtot    2.712e-16  3.827e-16  3.827e-16  9.787e-16  9.787e-16  3.798e-16
+  cgs      9.966e-15  9.966e-15  9.966e-15  2.990e-14  2.990e-14  9.966e-15
+  cgd      7.363e-16  7.534e-16  7.534e-16  2.164e-15  2.164e-15  7.179e-16
+
+
+
+ ******  
+ *project 'folded cascode op amp with gain boosting'                            
+  ******  transient analysis               tnom=  25.000 temp=  25.000          
+ ******  
+
+a
+
+
+      time       v(vout)
+ (a       )    -3.634e-02    -3.634e-02    -3.634e-02    -3.634e-02   -3.634e-02
+                      +             +             +             +             + 
+  1.667e-05 -3.63e-02-+------+------+------+------+------+------+--a---+------+-
+  1.000e-04 -3.63e-02 +      +a     +      +      +      +      +      +      + 
+                      +             +             +             +             + 
+
+b
+
+
+a
+
+
+      time       v(vin)
+ (a       )    -1.000e-12    -5.000e-13    -3.837e-27     5.000e-13    1.000e-12
+                      +             +             +             +             + 
+  1.667e-05    0.    -+------+------+------+------a------+------+------+------+-
+  1.000e-04    0.     +      +      +      +      a      +      +      +      + 
+                      +             +             +             +             + 
+
+b
+
+x
+
+        time    voltage    
+                   out+    
+                   out-    
+  1.6667e-05    1.341e-03  
+  1.0000e-04    1.341e-03  
+y
+
+          ***** job concluded
+1****** HSPICE -- A-2008.03 32-BIT (Feb 26 2008) winnt ******                   
+ ******  
+ *project 'folded cascode op amp with gain boosting'                            
+  ******  job statistics summary           tnom=  25.000 temp=  25.000          
+ ******  
+
+           total memory used        196 kbytes
+
+  # nodes =      34 # elements=      52
+  # diodes=       0 # bjts    =       0 # jfets   =       0 # mosfets =      30
+  # va device =       0
+
+    analysis           time    # points   tot. iter  conv.iter
+
+    op point           0.03           1         308
+    transient          0.16           2         386         193 rev=         0
+    readin             0.00
+    errchk             0.01
+    setup              0.00
+    output             0.00
+           total cpu time          0.23 seconds
+           total elapsed time         1 seconds
+               job started at  09:43:32 07/03/2014
+               job ended   at  09:43:32 07/03/2014
+
+
+ Init: hspice initialization file: C:\synopsys\Hspice_A-2008.03\hspice.ini

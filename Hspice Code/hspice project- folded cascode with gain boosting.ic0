@@ -1,0 +1,46 @@
+* "simulator" "HSPICE" 
+* "version" "A-2008.03 32-BIT"
+* "format" "HSP"
+* "rundate" "09:43:32 07/03/2014 "
+* "netlist""
+* "runtitle" "*project 'folded cascode op amp with gain boosting'"
+* time =    0.            
+* temperature =  2.500e+01       
+*** BEGIN: Saved Operating Point ***                     
+.option 
++ gmindc= 1.000e-12       
+.nodeset
++ b1 = 3.820e+00       
++ b3 = 3.820e+00       
++ b4 = 2.496e+00       
++ bi2 = 2.368e+00       
++ bi3 = 1.005e+00       
++ bi4 = 1.244e+00       
++ bias2 = 2.368e+00       
++ bias3 = 1.244e+00       
++ bias4 = 1.005e+00       
++ cmfb = 4.037e+00       
++ d11 = 4.308e+00       
++ d12 = 4.308e+00       
++ dd = 5.000e+00       
++ g17 = 3.148e+00       
++ g18 = 3.148e+00       
++ g19 = 3.848e+00       
++ g20 = 3.848e+00       
++ i+ = 2.000e+00       
++ i- = 2.000e+00       
++ out+ = 3.678e+00       
++ out- = 3.679e+00       
++ s112 = 9.007e-01       
++ s13 = 2.474e-01       
++ s19 = 2.362e+00       
++ s20 = 2.362e+00       
++ vin =   0.            
++ vout =-3.460e-02       
++ w = 3.537e+00       
++ x = 1.179e+00       
++ y =-6.606e-01       
++ z =-2.500e+00       
++ xaxuopamp1.s12 = 1.958e+00       
++ xaxuopamp3.s12 = 9.652e-01       
+***   END: Saved Operating Point ***                     
